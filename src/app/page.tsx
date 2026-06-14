@@ -61,10 +61,18 @@ export default function Home() {
           </div>
         </Link>
 
-        {/* O Relatório 4 entra na próxima parte. */}
-        <div className="rounded-lg border border-dashed border-slate-200 p-5 text-sm text-slate-400">
-          Relatório 4 (Reposição de óleo) — em breve.
-        </div>
+        <Link
+          href="/relatorio-4"
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow"
+        >
+          <div className="text-lg font-semibold text-slate-900">
+            Relatório 4 — Reposição de óleo
+          </div>
+          <div className="mt-1 text-sm text-slate-500">
+            Quanto o delivery precisa repor de óleo em cada frente, com resumo
+            pronto para o motorista.
+          </div>
+        </Link>
       </div>
     </main>
   );
