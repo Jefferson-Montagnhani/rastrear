@@ -23,10 +23,34 @@ export default function Home() {
           </div>
         </Link>
 
+        <Link
+          href="/relatorio-3"
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow"
+        >
+          <div className="text-lg font-semibold text-slate-900">
+            Relatório 3 — Saldo por caminhão
+          </div>
+          <div className="mt-1 text-sm text-slate-500">
+            Estoque por caminhão para o mecânico conferir físico × sistema, com a
+            data da última atualização em destaque.
+          </div>
+        </Link>
+
+        <Link
+          href="/materiais"
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow"
+        >
+          <div className="text-lg font-semibold text-slate-900">
+            Catálogo de materiais
+          </div>
+          <div className="mt-1 text-sm text-slate-500">
+            Cadastrar o nome “conhecido como” das peças (apoio ao Relatório 3).
+          </div>
+        </Link>
+
         {/* Os demais relatórios entram nas próximas partes. */}
         <div className="rounded-lg border border-dashed border-slate-200 p-5 text-sm text-slate-400">
-          Relatórios 1 (Custos), 3 (Saldo por caminhão) e 4 (Reposição de óleo)
-          — em breve.
+          Relatórios 1 (Custos) e 4 (Reposição de óleo) — em breve.
         </div>
       </div>
     </main>

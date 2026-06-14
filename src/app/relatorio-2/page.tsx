@@ -11,6 +11,9 @@ import { UploadTurnos } from "./_components/UploadTurnos";
 import { FiltrosRelatorio2 } from "./_components/FiltrosRelatorio2";
 import { ExportavelRelatorio } from "./_components/ExportavelRelatorio";
 
+// Sempre renderiza no servidor a cada requisição (dados vivos do banco).
+export const dynamic = "force-dynamic";
+
 // Página dinâmica: depende de searchParams (data / instância).
 export default async function Relatorio2Page(props: {
   searchParams: Promise<{ data?: string; instancia?: string }>;
