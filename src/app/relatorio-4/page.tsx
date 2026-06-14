@@ -36,7 +36,9 @@ export default async function Relatorio4Page(props: {
         .from("materiais")
         .select("codigo_material, abreviacao")
         .eq("is_oleo", true),
-      supabase.from("depositos").select("codigo_deposito, nome_deposito, frente"),
+      supabase
+        .from("depositos")
+        .select("codigo_deposito, nome_deposito, frente, is_delivery, ativo"),
     ]);
 
   const snaps = snapsRaw ?? [];
@@ -84,6 +86,13 @@ export default async function Relatorio4Page(props: {
       },
     ])
   );
+  // Caminhões-oficina (frentes a abastecer): exclui o delivery e depósitos
+  // que não são caminhão (ex.: central de lubrificação fora do cadastro).
+  const caminhoesValidos = new Set(
+    (depsRaw ?? [])
+      .filter((d) => !d.is_delivery && d.ativo)
+      .map((d) => d.codigo_deposito as string)
+  );
 
   // Linhas de estoque dos óleos no snapshot mais recente.
   const { data: rows } = codigosOleo.length
@@ -96,26 +105,31 @@ export default async function Relatorio4Page(props: {
         .in("codigo_material", codigosOleo)
     : { data: [] as Record<string, unknown>[] };
 
-  const calculados: OleoCalculado[] = (rows ?? []).map((r) => {
-    const cod = (r.deposito_codigo as string | null) ?? "—";
-    const mestre = mapaDeposito.get(cod);
-    const entrada: OleoEntrada = {
-      frente: mestre?.frente ?? "—",
-      deposito: cod,
-      nomeDeposito:
-        mestre?.nome ?? (r.nome_deposito as string | null) ?? cod,
-      codigoMaterial: (r.codigo_material as string | null) ?? "—",
-      abreviacao: mapaOleo.get(r.codigo_material as string) ?? "",
-      estoqueDisponivel: Number(r.estoque_disponivel ?? 0),
-      pontoReposicao:
-        r.ponto_reposicao == null ? null : Number(r.ponto_reposicao),
-      estoqueMaximo:
-        r.estoque_maximo == null ? null : Number(r.estoque_maximo),
-      reservasPendentes:
-        r.reservas_pendentes == null ? null : Number(r.reservas_pendentes),
-    };
-    return calcular(entrada);
-  });
+  const calculados: OleoCalculado[] = (rows ?? [])
+    .filter((r) =>
+      caminhoesValidos.has((r.deposito_codigo as string | null) ?? "")
+    )
+    .map((r) => {
+      const cod = (r.deposito_codigo as string | null) ?? "—";
+      const mestre = mapaDeposito.get(cod);
+      const entrada: OleoEntrada = {
+        frente: mestre?.frente ?? "—",
+        deposito: cod,
+        // Nome vem do SAP (fonte da verdade); cai no mestre se faltar.
+        nomeDeposito:
+          (r.nome_deposito as string | null) ?? mestre?.nome ?? cod,
+        codigoMaterial: (r.codigo_material as string | null) ?? "—",
+        abreviacao: mapaOleo.get(r.codigo_material as string) ?? "",
+        estoqueDisponivel: Number(r.estoque_disponivel ?? 0),
+        pontoReposicao:
+          r.ponto_reposicao == null ? null : Number(r.ponto_reposicao),
+        estoqueMaximo:
+          r.estoque_maximo == null ? null : Number(r.estoque_maximo),
+        reservasPendentes:
+          r.reservas_pendentes == null ? null : Number(r.reservas_pendentes),
+      };
+      return calcular(entrada);
+    });
 
   const ordenados = ordenarOleos(calculados);
   const resumo = ordenados.filter((o) => o.abastecer > 0); // o que vai pro motorista
