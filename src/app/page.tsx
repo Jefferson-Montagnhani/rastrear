@@ -11,6 +11,19 @@ export default function Home() {
 
       <div className="mt-8 grid gap-3">
         <Link
+          href="/relatorio-1"
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow"
+        >
+          <div className="text-lg font-semibold text-slate-900">
+            Relatório 1 — Custos
+          </div>
+          <div className="mt-1 text-sm text-slate-500">
+            Custo das baixas do dia anterior, agrupado por frente → depósito →
+            material, com Total Geral.
+          </div>
+        </Link>
+
+        <Link
           href="/relatorio-2"
           className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow"
         >
@@ -48,9 +61,9 @@ export default function Home() {
           </div>
         </Link>
 
-        {/* Os demais relatórios entram nas próximas partes. */}
+        {/* O Relatório 4 entra na próxima parte. */}
         <div className="rounded-lg border border-dashed border-slate-200 p-5 text-sm text-slate-400">
-          Relatórios 1 (Custos) e 4 (Reposição de óleo) — em breve.
+          Relatório 4 (Reposição de óleo) — em breve.
         </div>
       </div>
     </main>

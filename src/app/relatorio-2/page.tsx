@@ -9,7 +9,7 @@ import {
 } from "@/lib/turnos";
 import { UploadTurnos } from "./_components/UploadTurnos";
 import { FiltrosRelatorio2 } from "./_components/FiltrosRelatorio2";
-import { ExportavelRelatorio } from "./_components/ExportavelRelatorio";
+import { ExportavelRelatorio } from "@/components/ExportavelRelatorio";
 
 // Sempre renderiza no servidor a cada requisição (dados vivos do banco).
 export const dynamic = "force-dynamic";

@@ -8,7 +8,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-// Envolve o card do relatório e oferece um botão para exportá-lo como PNG
+// Envolve o card de um relatório e oferece um botão para exportá-lo como PNG
 // (formato prático para colar no grupo do WhatsApp).
 export function ExportavelRelatorio({ nomeArquivo, children }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);

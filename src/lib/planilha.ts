@@ -47,6 +47,37 @@ export function paraNumeroOuNull(valor: string): number | null {
   return valor.trim() === "" ? null : paraNumero(valor);
 }
 
+// Converte vários formatos de data/hora para "YYYY-MM-DD HH:MM:SS".
+export function normalizarDataHora(valor: unknown): string {
+  if (valor == null || valor === "") return "";
+  if (valor instanceof Date) {
+    const p = (n: number) => String(n).padStart(2, "0");
+    return (
+      `${valor.getFullYear()}-${p(valor.getMonth() + 1)}-${p(valor.getDate())} ` +
+      `${p(valor.getHours())}:${p(valor.getMinutes())}:${p(valor.getSeconds())}`
+    );
+  }
+  const texto = valor.toString().trim().replace("T", " ");
+  // 2026-06-02 08:23[:00]
+  let m = texto.match(/^(\d{4})-(\d{2})-(\d{2})[ ]+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (m) {
+    const [, a, mes, d, hh, mm, ss] = m;
+    return `${a}-${mes}-${d} ${hh.padStart(2, "0")}:${mm}:${ss ?? "00"}`;
+  }
+  // 02/06/2026 08:23[:00]
+  m = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})[ ]+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (m) {
+    const [, d, mes, a, hh, mm, ss] = m;
+    return `${a}-${mes}-${d} ${hh.padStart(2, "0")}:${mm}:${ss ?? "00"}`;
+  }
+  // Só data (yyyy-mm-dd)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) return `${texto} 00:00:00`;
+  // Só data (dd/mm/yyyy)
+  m = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]} 00:00:00`;
+  return texto;
+}
+
 // Detecta o delimitador do CSV pela linha de cabeçalho (";" ou ",").
 function detectarDelimitador(cabecalho: string): string {
   const pv = (cabecalho.match(/;/g) ?? []).length;
