@@ -91,6 +91,16 @@ export default async function Home() {
             quando o motorista avisar, com histórico.
           </div>
         </Link>
+
+        <Link
+          href="/usuarios"
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow"
+        >
+          <div className="text-lg font-semibold text-slate-900">Usuários</div>
+          <div className="mt-1 text-sm text-slate-500">
+            Definir papel (admin/mecânico) e situação de cada usuário.
+          </div>
+        </Link>
       </div>
     </main>
   );
