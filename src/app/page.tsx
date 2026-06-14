@@ -79,6 +79,18 @@ export default async function Home() {
             pronto para o motorista.
           </div>
         </Link>
+        <Link
+          href="/transferencias"
+          className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow"
+        >
+          <div className="text-lg font-semibold text-slate-900">
+            Transferências de óleo
+          </div>
+          <div className="mt-1 text-sm text-slate-500">
+            Registrar a transferência do delivery (CB04) para o caminhão-oficina
+            quando o motorista avisar, com histórico.
+          </div>
+        </Link>
       </div>
     </main>
   );
