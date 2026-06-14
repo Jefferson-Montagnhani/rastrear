@@ -38,7 +38,7 @@ export default async function Relatorio4Page(props: {
         .eq("is_oleo", true),
       supabase
         .from("depositos")
-        .select("codigo_deposito, nome_deposito, frente, is_delivery, ativo"),
+        .select("codigo_deposito, nome_deposito, frente, abastece_delivery, ativo"),
     ]);
 
   const snaps = snapsRaw ?? [];
@@ -86,11 +86,11 @@ export default async function Relatorio4Page(props: {
       },
     ])
   );
-  // Caminhões-oficina (frentes a abastecer): exclui o delivery e depósitos
-  // que não são caminhão (ex.: central de lubrificação fora do cadastro).
+  // Caminhões abastecidos pelo delivery (entram no R4). Ficam de fora o
+  // delivery, os de preventiva e a central — todos pegam direto no almoxarifado.
   const caminhoesValidos = new Set(
     (depsRaw ?? [])
-      .filter((d) => !d.is_delivery && d.ativo)
+      .filter((d) => d.abastece_delivery && d.ativo)
       .map((d) => d.codigo_deposito as string)
   );
 

@@ -18,7 +18,7 @@ export default async function TransferenciasPage() {
     await Promise.all([
       supabase
         .from("depositos")
-        .select("codigo_deposito, nome_deposito, frente, is_delivery, ativo")
+        .select("codigo_deposito, nome_deposito, frente, abastece_delivery, ativo")
         .order("nome_deposito", { ascending: true }),
       supabase
         .from("materiais")
@@ -36,9 +36,9 @@ export default async function TransferenciasPage() {
     ]);
 
   const deps = depsRaw ?? [];
-  // Caminhões-oficina (destinos): exclui o delivery e inativos.
+  // Destinos da transferência: só os caminhões abastecidos pelo delivery.
   const caminhoes = deps
-    .filter((d) => !d.is_delivery && d.ativo)
+    .filter((d) => d.abastece_delivery && d.ativo)
     .map((d) => ({
       valor: d.codigo_deposito as string,
       rotulo: `${d.nome_deposito ?? d.codigo_deposito}${
