@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { criarClienteSupabase } from "@/lib/supabase/server";
+import { exigirAdmin } from "@/lib/auth";
 import { formatarCarimbo, formatarData } from "@/lib/turnos";
 import { formatarNumero } from "@/lib/estoque";
 import {
@@ -16,7 +17,8 @@ export const dynamic = "force-dynamic";
 
 // Relatório 4 — Reposição de óleo por frente (para o motorista do delivery).
 export default async function Relatorio4Page() {
-  const supabase = criarClienteSupabase();
+  await exigirAdmin();
+  const supabase = await criarClienteSupabase();
 
   const [{ data: ultima }, { data: oleosCat }, { data: depsRaw }] =
     await Promise.all([

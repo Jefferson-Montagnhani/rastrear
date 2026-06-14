@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { criarClienteSupabase } from "@/lib/supabase/server";
+import { exigirAdmin } from "@/lib/auth";
 import { formatarCarimbo, formatarData } from "@/lib/turnos";
 import {
   agrupar,
@@ -18,8 +19,9 @@ export const dynamic = "force-dynamic";
 export default async function Relatorio1Page(props: {
   searchParams: Promise<{ data?: string }>;
 }) {
+  await exigirAdmin();
   const { data: dataParam } = await props.searchParams;
-  const supabase = criarClienteSupabase();
+  const supabase = await criarClienteSupabase();
 
   const [{ data: datasRaw }, { data: ultima }, { data: depsRaw }] =
     await Promise.all([

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { criarClienteSupabase } from "@/lib/supabase/server";
+import { usuarioAtual, ehAdmin } from "@/lib/auth";
 import { parsearTurnos } from "@/lib/parse-turnos";
 
 // Estado retornado para a UI (usado com useActionState).
@@ -12,6 +13,10 @@ export async function importarTurnosAction(
   _prev: EstadoImportacao,
   formData: FormData
 ): Promise<EstadoImportacao> {
+  if (!ehAdmin(await usuarioAtual())) {
+    return { ok: false, mensagem: "Apenas administradores podem importar." };
+  }
+
   const arquivo = formData.get("arquivo");
   if (!(arquivo instanceof File) || arquivo.size === 0) {
     return { ok: false, mensagem: "Selecione um arquivo de turnos." };
@@ -35,7 +40,7 @@ export async function importarTurnosAction(
     };
   }
 
-  const supabase = criarClienteSupabase();
+  const supabase = await criarClienteSupabase();
   const { data, error } = await supabase.rpc("importar_turnos", {
     p_arquivo: arquivo.name,
     p_turnos: turnos,

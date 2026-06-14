@@ -1,9 +1,15 @@
 import Link from "next/link";
+import { exigirAdmin } from "@/lib/auth";
+import { BarraUsuario } from "@/components/BarraUsuario";
 
-// Página inicial — por enquanto leva ao Relatório 2 (primeira parte construída).
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+// Página inicial (admin) — menu dos relatórios. Mecânico é levado ao R3.
+export default async function Home() {
+  await exigirAdmin();
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="mx-auto max-w-3xl px-4 py-8">
+      <BarraUsuario />
       <h1 className="text-3xl font-bold text-slate-900">Rastrear</h1>
       <p className="mt-2 text-slate-500">
         PCM · Manutenção Automotiva — relatórios diários dos caminhões-oficina.

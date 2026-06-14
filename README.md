@@ -43,9 +43,35 @@ substituir os 4 relatórios diários que hoje são montados numa planilha Excel
 
    Acesse `http://localhost:3000` → **Relatório 2 — Turnos**.
 
-> O upload do arquivo de turnos funciona direto na tela. Uma função SQL
-> (`importar_turnos`, `SECURITY DEFINER`) faz o `UPSERT` por `cd_turno`, então
+> O upload usa funções SQL `SECURITY DEFINER` (uma por tipo de arquivo), então
 > não é preciso chave de serviço — só as chaves públicas acima.
+
+## Acesso e papéis (login)
+
+O sistema usa **Supabase Auth** (login/senha) com dois papéis:
+
+- **admin:** acesso total (4 relatórios, uploads, catálogo).
+- **mecânico:** só leitura do **Relatório 3** (é levado direto a `/relatorio-3`).
+
+A sessão é por cookie (`@supabase/ssr`), renovada no `src/proxy.ts`; o gating de
+papel fica nas páginas (`exigirAdmin` / `exigirUsuario`) e a RLS no banco é o
+reforço final.
+
+**Primeira configuração (uma vez), após aplicar a migração `0006`:**
+
+1. No Supabase → **Authentication › Users › Add user**, crie seu usuário
+   (e-mail + senha). Um perfil `mecanico` é criado automaticamente por trigger.
+2. Promova-se a **admin** no SQL Editor (troque o e-mail):
+
+   ```sql
+   update public.profiles set papel = 'admin'
+   where id = (select id from auth.users where email = 'voce@empresa.com');
+   ```
+3. Para cada mecânico: crie o usuário em **Add user** (o perfil já nasce
+   `mecanico`). Nada mais a fazer.
+
+> Aplique as migrações em ordem (`0001` → `0006`). A `0006` fecha as leituras
+> abertas do MVP; sem um admin promovido, ninguém enxerga os dados de admin.
 
 ## Importar dados
 
@@ -71,16 +97,21 @@ substituir os 4 relatórios diários que hoje são montados numa planilha Excel
   e carimbo "Atualizado em".
 - **Exportar PNG:** gera a imagem do relatório para mandar no WhatsApp.
 
-## Modelo de dados (parte atual)
+## Modelo de dados
 
 | Tabela | Papel |
 |---|---|
-| `profiles` | usuários e papel (`admin`/`mecanico`) — usado quando ligarmos o Auth |
+| `profiles` | usuários e papel (`admin`/`mecanico`); RLS por perfil |
 | `importacoes` | lotes de upload; `created_at` = carimbo "Atualizado em" |
 | `turnos` | fonte do Relatório 2; colunas geradas `data_turno`, `turno`, `baixou` |
+| `baixas` | fonte do Relatório 1 (export Manfro) |
+| `estoque` | snapshot do SAP (Relatórios 3 e 4) |
+| `materiais` | catálogo (apelido "conhecido como", óleos) |
+| `depositos` | mestre depósito → frota → frente |
 
-Views de apoio: `v_datas_turnos`, `v_instancias_turnos` (seletores).
-Função: `importar_turnos(p_arquivo, p_turnos jsonb)`.
+Funções `SECURITY DEFINER` (admin): `importar_turnos`, `importar_estoque`,
+`importar_baixas`, `definir_conhecido_como`; mais `is_admin()` e o trigger de
+criação de perfil. Migrações em `supabase/migrations/`.
 
 ## Observação sobre o ambiente de sandbox
 
@@ -91,8 +122,6 @@ então `npm run dev` e os uploads funcionam direto.
 
 ## Próximos passos
 
-- Relatório 1 (Custos), Relatório 3 (Saldo por caminhão, leitura p/ mecânico),
-  Relatório 4 (Reposição de óleo)
-- Login por papel (Supabase Auth) e RLS por perfil
 - Registro de transferências de óleo (delivery → caminhão-oficina)
-- Histórico por data e exportação em PDF
+- Histórico por data (R3/R4) e exportação em PDF
+- Tela de administração de usuários (hoje os papéis são ajustados via SQL)

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { criarClienteSupabase } from "@/lib/supabase/server";
+import { usuarioAtual, ehAdmin } from "@/lib/auth";
 import { parsearEstoque } from "@/lib/parse-estoque";
 
 export type EstadoImportacao = { ok: boolean; mensagem: string } | null;
@@ -11,6 +12,10 @@ export async function importarEstoqueAction(
   _prev: EstadoImportacao,
   formData: FormData
 ): Promise<EstadoImportacao> {
+  if (!ehAdmin(await usuarioAtual())) {
+    return { ok: false, mensagem: "Apenas administradores podem importar." };
+  }
+
   const arquivo = formData.get("arquivo");
   if (!(arquivo instanceof File) || arquivo.size === 0) {
     return { ok: false, mensagem: "Selecione o arquivo de estoque do SAP." };
@@ -35,7 +40,7 @@ export async function importarEstoqueAction(
     };
   }
 
-  const supabase = criarClienteSupabase();
+  const supabase = await criarClienteSupabase();
   const { data, error } = await supabase.rpc("importar_estoque", {
     p_arquivo: arquivo.name,
     p_estoque: estoque,

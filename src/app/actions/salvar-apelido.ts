@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { criarClienteSupabase } from "@/lib/supabase/server";
+import { usuarioAtual, ehAdmin } from "@/lib/auth";
 
 export type EstadoApelido = { ok: boolean; mensagem: string } | null;
 
@@ -10,6 +11,10 @@ export async function salvarApelidoAction(
   _prev: EstadoApelido,
   formData: FormData
 ): Promise<EstadoApelido> {
+  if (!ehAdmin(await usuarioAtual())) {
+    return { ok: false, mensagem: "Apenas administradores podem editar." };
+  }
+
   const codigo = (formData.get("codigo") as string | null)?.trim();
   const nome = (formData.get("conhecido_como") as string | null) ?? "";
 
@@ -17,7 +22,7 @@ export async function salvarApelidoAction(
     return { ok: false, mensagem: "Código do material ausente." };
   }
 
-  const supabase = criarClienteSupabase();
+  const supabase = await criarClienteSupabase();
   const { error } = await supabase.rpc("definir_conhecido_como", {
     p_codigo: codigo,
     p_nome: nome,

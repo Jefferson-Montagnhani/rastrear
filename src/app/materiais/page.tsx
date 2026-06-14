@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { criarClienteSupabase } from "@/lib/supabase/server";
+import { exigirAdmin } from "@/lib/auth";
 import { CatalogoMateriais } from "./_components/CatalogoMateriais";
 import { AdicionarMaterial } from "./_components/AdicionarMaterial";
 import type { Material } from "./_components/LinhaMaterial";
@@ -10,7 +11,8 @@ export const dynamic = "force-dynamic";
 // Catálogo de materiais: cadastrar o "conhecido como" (apelido) das peças,
 // que ajuda o mecânico a reconhecer o item no Relatório 3.
 export default async function MateriaisPage() {
-  const supabase = criarClienteSupabase();
+  await exigirAdmin();
+  const supabase = await criarClienteSupabase();
 
   const { data } = await supabase
     .from("materiais")

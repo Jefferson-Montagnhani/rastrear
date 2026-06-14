@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { criarClienteSupabase } from "@/lib/supabase/server";
+import { exigirUsuario, ehAdmin } from "@/lib/auth";
+import { BarraUsuario } from "@/components/BarraUsuario";
 import { formatarCarimbo, formatarData } from "@/lib/turnos";
 import { type DepositoOpcao, type EstoqueLinha } from "@/lib/estoque";
 import { SeletorDeposito } from "./_components/SeletorDeposito";
@@ -13,8 +15,11 @@ export const dynamic = "force-dynamic";
 export default async function Relatorio3Page(props: {
   searchParams: Promise<{ deposito?: string }>;
 }) {
+  // Mecânico e admin acessam (leitura); o painel de admin só aparece p/ admin.
+  const u = await exigirUsuario();
+  const admin = ehAdmin(u);
   const { deposito: depositoParam } = await props.searchParams;
-  const supabase = criarClienteSupabase();
+  const supabase = await criarClienteSupabase();
 
   // Snapshot mais recente de estoque.
   const { data: ultima } = await supabase
@@ -35,9 +40,9 @@ export default async function Relatorio3Page(props: {
       <Pagina atualizadoEm="—" dataSnapshot={null}>
         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
           Nenhum estoque importado ainda. O administrador precisa importar o
-          export do SAP (painel abaixo).
+          export do SAP.
         </div>
-        <AreaAdmin />
+        {admin && <AreaAdmin />}
       </Pagina>
     );
   }
@@ -110,7 +115,7 @@ export default async function Relatorio3Page(props: {
     >
       <SeletorDeposito depositos={depositos} selecionado={selecionado} />
       <EstoqueTabela linhas={linhas} />
-      <AreaAdmin />
+      {admin && <AreaAdmin />}
     </Pagina>
   );
 }
@@ -128,6 +133,7 @@ function Pagina({
 }) {
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
+      <BarraUsuario />
       <Link href="/" className="text-sm text-slate-500 hover:text-slate-700">
         ← Início
       </Link>

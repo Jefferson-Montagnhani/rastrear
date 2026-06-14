@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { criarClienteSupabase } from "@/lib/supabase/server";
+import { exigirAdmin } from "@/lib/auth";
 import {
   calcularResumo,
   formatarCarimbo,
@@ -18,9 +19,10 @@ export const dynamic = "force-dynamic";
 export default async function Relatorio2Page(props: {
   searchParams: Promise<{ data?: string; instancia?: string }>;
 }) {
+  await exigirAdmin();
   const { data: dataParam, instancia: instanciaParam } =
     await props.searchParams;
-  const supabase = criarClienteSupabase();
+  const supabase = await criarClienteSupabase();
 
   // Datas e instâncias disponíveis (para os seletores).
   const [{ data: datasRaw }, { data: instanciasRaw }, { data: ultimaImport }] =

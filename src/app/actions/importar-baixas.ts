@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { criarClienteSupabase } from "@/lib/supabase/server";
+import { usuarioAtual, ehAdmin } from "@/lib/auth";
 import { parsearBaixas } from "@/lib/parse-baixas";
 
 export type EstadoImportacao = { ok: boolean; mensagem: string } | null;
@@ -11,6 +12,10 @@ export async function importarBaixasAction(
   _prev: EstadoImportacao,
   formData: FormData
 ): Promise<EstadoImportacao> {
+  if (!ehAdmin(await usuarioAtual())) {
+    return { ok: false, mensagem: "Apenas administradores podem importar." };
+  }
+
   const arquivo = formData.get("arquivo");
   if (!(arquivo instanceof File) || arquivo.size === 0) {
     return { ok: false, mensagem: "Selecione o arquivo de baixas (Manfro)." };
@@ -35,7 +40,7 @@ export async function importarBaixasAction(
     };
   }
 
-  const supabase = criarClienteSupabase();
+  const supabase = await criarClienteSupabase();
   const { data, error } = await supabase.rpc("importar_baixas", {
     p_arquivo: arquivo.name,
     p_baixas: baixas,
