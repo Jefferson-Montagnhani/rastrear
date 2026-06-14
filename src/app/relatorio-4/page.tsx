@@ -10,25 +10,28 @@ import {
   type OleoEntrada,
 } from "@/lib/oleo";
 import { ExportavelRelatorio } from "@/components/ExportavelRelatorio";
+import { BarraUsuario } from "@/components/BarraUsuario";
+import { SeletorSnapshot } from "@/components/SeletorSnapshot";
 import { UploadEstoque } from "@/app/relatorio-3/_components/UploadEstoque";
 
 // Sempre renderiza no servidor a cada requisição (dados vivos do banco).
 export const dynamic = "force-dynamic";
 
 // Relatório 4 — Reposição de óleo por frente (para o motorista do delivery).
-export default async function Relatorio4Page() {
+export default async function Relatorio4Page(props: {
+  searchParams: Promise<{ snap?: string }>;
+}) {
   await exigirAdmin();
+  const { snap: snapParam } = await props.searchParams;
   const supabase = await criarClienteSupabase();
 
-  const [{ data: ultima }, { data: oleosCat }, { data: depsRaw }] =
+  const [{ data: snapsRaw }, { data: oleosCat }, { data: depsRaw }] =
     await Promise.all([
       supabase
         .from("importacoes")
         .select("id, created_at, periodo_fim")
         .eq("tipo", "estoque")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+        .order("created_at", { ascending: false }),
       supabase
         .from("materiais")
         .select("codigo_material, abreviacao")
@@ -36,13 +39,11 @@ export default async function Relatorio4Page() {
       supabase.from("depositos").select("codigo_deposito, nome_deposito, frente"),
     ]);
 
-  const atualizadoEm = formatarCarimbo(
-    (ultima?.created_at as string | undefined) ?? null
-  );
+  const snaps = snapsRaw ?? [];
 
-  if (!ultima?.id) {
+  if (snaps.length === 0) {
     return (
-      <Pagina atualizadoEm="—">
+      <Pagina atualizadoEm="—" snapshots={[]} snapSelecionado="">
         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
           Nenhum estoque importado ainda. Importe o export do SAP (painel
           abaixo).
@@ -51,6 +52,20 @@ export default async function Relatorio4Page() {
       </Pagina>
     );
   }
+
+  const snapSelecionado =
+    snapParam && snaps.some((s) => (s.id as string) === snapParam)
+      ? snapParam
+      : (snaps[0].id as string);
+  const snapAtual = snaps.find((s) => (s.id as string) === snapSelecionado)!;
+  const importacaoId = snapSelecionado;
+  const atualizadoEm = formatarCarimbo(
+    (snapAtual.created_at as string | undefined) ?? null
+  );
+  const opcoesSnapshot = snaps.map((s) => ({
+    id: s.id as string,
+    rotulo: formatarCarimbo((s.created_at as string | undefined) ?? null),
+  }));
 
   // Mapa código de óleo -> abreviação, e mapa depósito -> frente/nome.
   const mapaOleo = new Map(
@@ -77,7 +92,7 @@ export default async function Relatorio4Page() {
         .select(
           "deposito_codigo, nome_deposito, codigo_material, estoque_disponivel, ponto_reposicao, estoque_maximo, reservas_pendentes"
         )
-        .eq("importacao_id", ultima.id as string)
+        .eq("importacao_id", importacaoId)
         .in("codigo_material", codigosOleo)
     : { data: [] as Record<string, unknown>[] };
 
@@ -115,9 +130,14 @@ export default async function Relatorio4Page() {
   }
 
   return (
-    <Pagina atualizadoEm={atualizadoEm}>
+    <Pagina
+      atualizadoEm={atualizadoEm}
+      snapshots={opcoesSnapshot}
+      snapSelecionado={snapSelecionado}
+    >
       <p className="text-xs text-slate-400">
-        Estoque de {formatarData((ultima.periodo_fim as string | null) ?? null)}
+        Estoque de{" "}
+        {formatarData((snapAtual.periodo_fim as string | null) ?? null)}
       </p>
 
       {/* Resumo do motorista (o que vai pro WhatsApp) */}
@@ -234,12 +254,17 @@ export default async function Relatorio4Page() {
 function Pagina({
   children,
   atualizadoEm,
+  snapshots,
+  snapSelecionado,
 }: {
   children: React.ReactNode;
   atualizadoEm: string;
+  snapshots: { id: string; rotulo: string }[];
+  snapSelecionado: string;
 }) {
   return (
     <main className="mx-auto max-w-4xl px-4 py-6">
+      <BarraUsuario />
       <div className="mb-3 flex items-center justify-between">
         <div>
           <Link href="/" className="text-sm text-slate-500 hover:text-slate-700">
@@ -250,6 +275,9 @@ function Pagina({
           </h1>
         </div>
         <span className="text-xs text-slate-400">Atualizado em {atualizadoEm}</span>
+      </div>
+      <div className="mb-4">
+        <SeletorSnapshot snapshots={snapshots} selecionado={snapSelecionado} />
       </div>
       <div className="flex flex-col gap-4">{children}</div>
     </main>

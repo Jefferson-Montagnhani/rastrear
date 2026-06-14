@@ -2,6 +2,7 @@ import Link from "next/link";
 import { criarClienteSupabase } from "@/lib/supabase/server";
 import { exigirUsuario, ehAdmin } from "@/lib/auth";
 import { BarraUsuario } from "@/components/BarraUsuario";
+import { SeletorSnapshot } from "@/components/SeletorSnapshot";
 import { formatarCarimbo, formatarData } from "@/lib/turnos";
 import { type DepositoOpcao, type EstoqueLinha } from "@/lib/estoque";
 import { SeletorDeposito } from "./_components/SeletorDeposito";
@@ -13,31 +14,32 @@ export const dynamic = "force-dynamic";
 
 // Relatório 3 — Saldo de estoque por caminhão (tela de leitura do mecânico).
 export default async function Relatorio3Page(props: {
-  searchParams: Promise<{ deposito?: string }>;
+  searchParams: Promise<{ deposito?: string; snap?: string }>;
 }) {
   // Mecânico e admin acessam (leitura); o painel de admin só aparece p/ admin.
   const u = await exigirUsuario();
   const admin = ehAdmin(u);
-  const { deposito: depositoParam } = await props.searchParams;
+  const { deposito: depositoParam, snap: snapParam } = await props.searchParams;
   const supabase = await criarClienteSupabase();
 
-  // Snapshot mais recente de estoque.
-  const { data: ultima } = await supabase
+  // Snapshots de estoque (histórico): cada upload do SAP é um snapshot.
+  const { data: snapsRaw } = await supabase
     .from("importacoes")
     .select("id, created_at, periodo_fim")
     .eq("tipo", "estoque")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
 
-  const atualizadoEm = formatarCarimbo(
-    (ultima?.created_at as string | undefined) ?? null
-  );
+  const snaps = snapsRaw ?? [];
 
   // Sem estoque importado ainda.
-  if (!ultima?.id) {
+  if (snaps.length === 0) {
     return (
-      <Pagina atualizadoEm="—" dataSnapshot={null}>
+      <Pagina
+        atualizadoEm="—"
+        dataSnapshot={null}
+        snapshots={[]}
+        snapSelecionado=""
+      >
         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
           Nenhum estoque importado ainda. O administrador precisa importar o
           export do SAP.
@@ -47,7 +49,19 @@ export default async function Relatorio3Page(props: {
     );
   }
 
-  const importacaoId = ultima.id as string;
+  const snapSelecionado =
+    snapParam && snaps.some((s) => (s.id as string) === snapParam)
+      ? snapParam
+      : (snaps[0].id as string);
+  const snapAtual = snaps.find((s) => (s.id as string) === snapSelecionado)!;
+  const importacaoId = snapSelecionado;
+  const atualizadoEm = formatarCarimbo(
+    (snapAtual.created_at as string | undefined) ?? null
+  );
+  const opcoesSnapshot = snaps.map((s) => ({
+    id: s.id as string,
+    rotulo: formatarCarimbo((s.created_at as string | undefined) ?? null),
+  }));
 
   // Lista de caminhões (depósitos) do snapshot.
   const { data: depsRaw } = await supabase
@@ -111,7 +125,9 @@ export default async function Relatorio3Page(props: {
   return (
     <Pagina
       atualizadoEm={atualizadoEm}
-      dataSnapshot={(ultima.periodo_fim as string | null) ?? null}
+      dataSnapshot={(snapAtual.periodo_fim as string | null) ?? null}
+      snapshots={opcoesSnapshot}
+      snapSelecionado={snapSelecionado}
     >
       <SeletorDeposito depositos={depositos} selecionado={selecionado} />
       <EstoqueTabela linhas={linhas} />
@@ -126,10 +142,14 @@ function Pagina({
   children,
   atualizadoEm,
   dataSnapshot,
+  snapshots,
+  snapSelecionado,
 }: {
   children: React.ReactNode;
   atualizadoEm: string;
   dataSnapshot: string | null;
+  snapshots: { id: string; rotulo: string }[];
+  snapSelecionado: string;
 }) {
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
@@ -151,6 +171,13 @@ function Pagina({
             (estoque de {formatarData(dataSnapshot)})
           </span>
         )}
+      </div>
+
+      <div className="mb-4">
+        <SeletorSnapshot
+          snapshots={snapshots}
+          selecionado={snapSelecionado}
+        />
       </div>
 
       <div className="flex flex-col gap-4">{children}</div>
