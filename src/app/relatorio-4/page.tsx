@@ -198,7 +198,7 @@ export default async function Relatorio4Page(props: {
                 </tr>
               )}
               {resumo.length > 0 && (
-                <tr className="border-t-2 border-slate-300 bg-slate-800 text-white">
+                <tr className="border-t-2 border-slate-300 bg-brand text-white">
                   <td className="px-3 py-2 font-bold" colSpan={4}>
                     TOTAL A ABASTECER
                   </td>

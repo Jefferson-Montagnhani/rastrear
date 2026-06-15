@@ -161,7 +161,7 @@ export default async function Relatorio1Page(props: {
               ))}
 
               {/* Total Geral */}
-              <tr className="border-t-2 border-slate-300 bg-slate-800 text-white">
+              <tr className="border-t-2 border-slate-300 bg-brand text-white">
                 <td className="px-3 py-2 font-bold" colSpan={2}>
                   TOTAL GERAL
                 </td>
