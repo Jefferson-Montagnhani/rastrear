@@ -10,6 +10,7 @@ import {
 } from "@/lib/baixas";
 import { ExportavelRelatorio } from "@/components/ExportavelRelatorio";
 import { UploadBaixas } from "./_components/UploadBaixas";
+import { UploadMM60 } from "./_components/UploadMM60";
 import { FiltroData } from "./_components/FiltroData";
 
 // Sempre renderiza no servidor a cada requisição (dados vivos do banco).
@@ -23,7 +24,7 @@ export default async function Relatorio1Page(props: {
   const { data: dataParam } = await props.searchParams;
   const supabase = await criarClienteSupabase();
 
-  const [{ data: datasRaw }, { data: ultima }, { data: depsRaw }] =
+  const [{ data: datasRaw }, { data: ultima }, { data: depsRaw }, { data: precosRaw }] =
     await Promise.all([
       supabase
         .from("v_datas_baixas")
@@ -39,6 +40,10 @@ export default async function Relatorio1Page(props: {
       supabase
         .from("depositos")
         .select("codigo_deposito, nome_deposito, frente"),
+      supabase
+        .from("materiais")
+        .select("codigo_material, preco_unitario")
+        .limit(20000),
     ]);
 
   const datas = (datasRaw ?? []).map((d) => d.data_referencia as string);
@@ -54,6 +59,14 @@ export default async function Relatorio1Page(props: {
         nome: (d.nome_deposito as string | null) ?? null,
         frente: (d.frente as string | null) ?? null,
       },
+    ])
+  );
+
+  // Preço unitário por material (vindo do MM60) para calcular o custo.
+  const mapaPreco = new Map(
+    (precosRaw ?? []).map((m) => [
+      m.codigo_material as string,
+      Number(m.preco_unitario ?? 0),
     ])
   );
 
@@ -96,14 +109,18 @@ export default async function Relatorio1Page(props: {
     const cod = (b.deposito_codigo as string | null) ?? "—";
     const mestre = mapaDeposito.get(cod);
     const frenteArquivo = (b.frente as string | null)?.trim();
+    const codMaterial = (b.codigo_material as string | null) ?? "—";
+    const quantidade = Number(b.quantidade ?? 0);
+    const preco = mapaPreco.get(codMaterial) ?? 0;
     return {
       frente: frenteArquivo || mestre?.frente || "—",
       deposito: cod,
       nomeDeposito: mestre?.nome || cod,
-      codigoMaterial: (b.codigo_material as string | null) ?? "—",
+      codigoMaterial: codMaterial,
       descricao: (b.descricao_material as string | null) ?? "",
-      quantidade: Number(b.quantidade ?? 0),
-      total: Number(b.total_rs ?? 0),
+      quantidade,
+      // Total = Quantidade x Preço (MM60). Material sem preço entra como 0.
+      total: quantidade * preco,
     };
   });
 
@@ -285,6 +302,11 @@ function AreaAdmin() {
         substitui as baixas daquele dia.
       </p>
       <UploadBaixas />
+      <p className="mt-4 mb-3 text-xs text-slate-500">
+        Importar a lista de preço (MM60) para o custo em R$. Reenvie sempre que
+        os preços mudarem.
+      </p>
+      <UploadMM60 />
     </section>
   );
 }
