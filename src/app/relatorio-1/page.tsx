@@ -75,13 +75,24 @@ export default async function Relatorio1Page(props: {
   const { data: linhasRaw } = await supabase
     .from("baixas")
     .select(
-      "frente, deposito_codigo, codigo_material, descricao_material, quantidade, total_rs"
+      "frente, deposito_codigo, codigo_material, descricao_material, quantidade, total_rs, status"
     )
     .eq("data_referencia", dataSelecionada)
     .limit(50000);
 
+  // Só baixas efetivas: o Manfro traz muitas canceladas. (Ajustável.)
+  const STATUS_EFETIVOS = new Set([
+    "T - Atendimento Total",
+    "S - Integrado",
+  ]);
+  const linhasEfetivas = (linhasRaw ?? []).filter(
+    (b) =>
+      b.status == null ||
+      STATUS_EFETIVOS.has((b.status as string | null) ?? "")
+  );
+
   // Resolve frente e nome do depósito (usando o mestre como apoio).
-  const entradas: BaixaEntrada[] = (linhasRaw ?? []).map((b) => {
+  const entradas: BaixaEntrada[] = linhasEfetivas.map((b) => {
     const cod = (b.deposito_codigo as string | null) ?? "—";
     const mestre = mapaDeposito.get(cod);
     const frenteArquivo = (b.frente as string | null)?.trim();
