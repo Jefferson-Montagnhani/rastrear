@@ -1,13 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { criarClienteSupabase } from "@/lib/supabase/server";
 import { exigirUsuario, ehAdmin } from "@/lib/auth";
-import { BarraUsuario } from "@/components/BarraUsuario";
 import { SeletorSnapshot } from "@/components/SeletorSnapshot";
 import { formatarCarimbo, formatarData } from "@/lib/turnos";
 import { type DepositoOpcao, type EstoqueLinha } from "@/lib/estoque";
 import { SeletorDeposito } from "./_components/SeletorDeposito";
 import { EstoqueTabela } from "./_components/EstoqueTabela";
 import { UploadEstoque } from "./_components/UploadEstoque";
+import { AreaAdmin, CabecalhoPagina, EstadoVazio } from "@/components/ui";
+
+export const metadata: Metadata = { title: "Relatório 3 — Saldo por caminhão" };
 
 // Sempre renderiza no servidor a cada requisição (dados vivos do banco).
 export const dynamic = "force-dynamic";
@@ -40,11 +43,11 @@ export default async function Relatorio3Page(props: {
         snapshots={[]}
         snapSelecionado=""
       >
-        <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-          Nenhum estoque importado ainda. O administrador precisa importar o
-          export do SAP.
-        </div>
-        {admin && <AreaAdmin />}
+        <EstadoVazio
+          titulo="Nenhum estoque importado ainda"
+          descricao="O administrador precisa importar o export do SAP para o saldo aparecer aqui."
+        />
+        {admin && <PainelAdmin abertaPorPadrao />}
       </Pagina>
     );
   }
@@ -131,7 +134,7 @@ export default async function Relatorio3Page(props: {
     >
       <SeletorDeposito depositos={depositos} selecionado={selecionado} />
       <EstoqueTabela linhas={linhas} />
-      {admin && <AreaAdmin />}
+      {admin && <PainelAdmin />}
     </Pagina>
   );
 }
@@ -153,16 +156,26 @@ function Pagina({
 }) {
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
-      <BarraUsuario />
-      <Link href="/" className="text-sm text-slate-500 hover:text-slate-700">
-        ← Início
-      </Link>
-      <h1 className="text-2xl font-bold text-slate-900">
-        Relatório 3 — Saldo por caminhão
-      </h1>
+      <CabecalhoPagina
+        titulo="Relatório 3 — Saldo por caminhão"
+        descricao="Estoque por caminhão para conferir físico × sistema."
+      />
 
       {/* Carimbo de atualização em destaque (requisito do mecânico) */}
-      <div className="my-4 flex flex-wrap items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+      <div className="my-4 flex flex-wrap items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className="h-5 w-5 text-emerald-700"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 3" />
+        </svg>
         <span className="text-sm font-semibold text-emerald-800">
           Atualizado em {atualizadoEm}
         </span>
@@ -185,21 +198,18 @@ function Pagina({
   );
 }
 
-function AreaAdmin() {
+function PainelAdmin({ abertaPorPadrao = false }: { abertaPorPadrao?: boolean }) {
   return (
-    <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <h2 className="mb-1 text-sm font-semibold text-slate-700">
-        Área do administrador
-      </h2>
+    <AreaAdmin abertaPorPadrao={abertaPorPadrao}>
       <p className="mb-3 text-xs text-slate-500">
-        Importar o export de estoque do SAP (.csv / .xls). Os apelidos das peças
-        são cadastrados no{" "}
+        Importar o export de estoque do SAP (.csv / .xls). Os apelidos das
+        peças são cadastrados no{" "}
         <Link href="/materiais" className="text-emerald-700 underline">
           catálogo de materiais
         </Link>
         .
       </p>
       <UploadEstoque />
-    </section>
+    </AreaAdmin>
   );
 }

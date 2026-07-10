@@ -1,4 +1,4 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { criarClienteSupabase } from "@/lib/supabase/server";
 import { exigirAdmin } from "@/lib/auth";
 import { formatarCarimbo, formatarData } from "@/lib/turnos";
@@ -12,6 +12,14 @@ import { ExportavelRelatorio } from "@/components/ExportavelRelatorio";
 import { UploadBaixas } from "./_components/UploadBaixas";
 import { UploadMM60 } from "./_components/UploadMM60";
 import { FiltroData } from "./_components/FiltroData";
+import {
+  AreaAdmin,
+  CabecalhoPagina,
+  CartaoResumo,
+  EstadoVazio,
+} from "@/components/ui";
+
+export const metadata: Metadata = { title: "Relatório 1 — Custos" };
 
 // Sempre renderiza no servidor a cada requisição (dados vivos do banco).
 export const dynamic = "force-dynamic";
@@ -72,12 +80,11 @@ export default async function Relatorio1Page(props: {
 
   if (datas.length === 0) {
     return (
-      <Pagina atualizadoEm="—">
-        <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-          Nenhuma baixa importada ainda. Importe um export do Manfro no painel
-          abaixo.
-        </div>
-        <AreaAdmin />
+      <Pagina atualizadoEm="—" adminAberta>
+        <EstadoVazio
+          titulo="Nenhuma baixa importada ainda"
+          descricao="Importe um export do Manfro na área do administrador abaixo para gerar o relatório de custos."
+        />
       </Pagina>
     );
   }
@@ -141,6 +148,23 @@ export default async function Relatorio1Page(props: {
           </p>
         </div>
 
+        {/* Cartões de resumo */}
+        <div className="mb-5 grid grid-cols-3 gap-3">
+          <CartaoResumo
+            titulo="Total geral"
+            valor={formatarReais(relatorio.totalGeral)}
+            destaque="emerald"
+          />
+          <CartaoResumo
+            titulo="Qtd. total baixada"
+            valor={formatarQtd(relatorio.totalQuantidade)}
+          />
+          <CartaoResumo
+            titulo="Frentes"
+            valor={relatorio.frentes.length.toLocaleString("pt-BR")}
+          />
+        </div>
+
         <div className="overflow-x-auto rounded-lg border border-slate-200">
           <table className="w-full border-collapse text-sm">
             <thead>
@@ -176,8 +200,6 @@ export default async function Relatorio1Page(props: {
           </table>
         </div>
       </ExportavelRelatorio>
-
-      <AreaAdmin />
     </Pagina>
   );
 }
@@ -266,47 +288,36 @@ function DepositoSecao({
 function Pagina({
   children,
   atualizadoEm,
+  adminAberta = false,
 }: {
   children: React.ReactNode;
   atualizadoEm: string;
+  adminAberta?: boolean;
 }) {
   return (
     <main className="mx-auto max-w-4xl px-4 py-6">
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <Link href="/" className="text-sm text-slate-500 hover:text-slate-700">
-            ← Início
-          </Link>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Relatório 1 — Custos
-          </h1>
-        </div>
-        <span className="text-xs text-slate-400">
-          Atualizado em {atualizadoEm}
-        </span>
+      <CabecalhoPagina
+        titulo="Relatório 1 — Custos"
+        descricao="Custo das baixas por frente, depósito e material."
+        atualizadoEm={atualizadoEm}
+      />
+
+      <div className="flex flex-col gap-4">
+        {children}
+
+        <AreaAdmin abertaPorPadrao={adminAberta}>
+          <p className="mb-3 text-xs text-slate-500">
+            Importar o export de baixas do Manfro (.csv / .xls). Reenviar um
+            dia substitui as baixas daquele dia.
+          </p>
+          <UploadBaixas />
+          <p className="mt-4 mb-3 text-xs text-slate-500">
+            Importar a lista de preço (MM60) para o custo em R$. Reenvie sempre
+            que os preços mudarem.
+          </p>
+          <UploadMM60 />
+        </AreaAdmin>
       </div>
-
-      <div className="flex flex-col gap-4">{children}</div>
     </main>
-  );
-}
-
-function AreaAdmin() {
-  return (
-    <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <h2 className="mb-1 text-sm font-semibold text-slate-700">
-        Área do administrador
-      </h2>
-      <p className="mb-3 text-xs text-slate-500">
-        Importar o export de baixas do Manfro (.csv / .xls). Reenviar um dia
-        substitui as baixas daquele dia.
-      </p>
-      <UploadBaixas />
-      <p className="mt-4 mb-3 text-xs text-slate-500">
-        Importar a lista de preço (MM60) para o custo em R$. Reenvie sempre que
-        os preços mudarem.
-      </p>
-      <UploadMM60 />
-    </section>
   );
 }

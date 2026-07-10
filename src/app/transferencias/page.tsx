@@ -1,11 +1,13 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { criarClienteSupabase } from "@/lib/supabase/server";
 import { exigirAdmin } from "@/lib/auth";
-import { BarraUsuario } from "@/components/BarraUsuario";
 import { formatarData } from "@/lib/turnos";
 import { formatarNumero } from "@/lib/estoque";
-import { excluirTransferenciaAction } from "@/app/actions/transferencias";
 import { FormTransferencia } from "./_components/FormTransferencia";
+import { BotaoExcluir } from "./_components/BotaoExcluir";
+import { CabecalhoPagina, Td, Th } from "@/components/ui";
+
+export const metadata: Metadata = { title: "Transferências de óleo" };
 
 export const dynamic = "force-dynamic";
 
@@ -70,76 +72,67 @@ export default async function TransferenciasPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6">
-      <BarraUsuario />
-      <Link href="/" className="text-sm text-slate-500 hover:text-slate-700">
-        ← Início
-      </Link>
-      <h1 className="text-2xl font-bold text-slate-900">
-        Transferências de óleo
-      </h1>
-      <p className="mt-1 mb-4 text-sm text-slate-500">
-        Registre a transferência do caminhão delivery (CB04) para o
-        caminhão-oficina, depois que o motorista avisar o abastecimento.
-      </p>
+      <CabecalhoPagina
+        titulo="Transferências de óleo"
+        descricao="Registre a transferência do caminhão delivery (CB04) para o caminhão-oficina, depois que o motorista avisar o abastecimento."
+      />
 
-      <section className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <section className="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold text-slate-700">
           Nova transferência
         </h2>
         <FormTransferencia hoje={hoje} caminhoes={caminhoes} oleos={oleos} />
       </section>
 
-      <h2 className="mb-2 text-sm font-semibold text-slate-700">Histórico</h2>
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <h2 className="mb-2 text-sm font-semibold text-slate-700">
+        Histórico{" "}
+        <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+          {transferencias.length}
+        </span>
+      </h2>
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-slate-100 text-left text-slate-600">
-              <th className="px-3 py-2 font-semibold">Data</th>
-              <th className="px-3 py-2 font-semibold">Frente</th>
-              <th className="px-3 py-2 font-semibold">Caminhão</th>
-              <th className="px-3 py-2 font-semibold">Óleo</th>
-              <th className="px-3 py-2 text-right font-semibold">Qtd</th>
-              <th className="px-3 py-2 font-semibold">Obs.</th>
-              <th className="px-3 py-2"></th>
+              <Th>Data</Th>
+              <Th>Frente</Th>
+              <Th>Caminhão</Th>
+              <Th>Óleo</Th>
+              <Th className="text-right">Qtd</Th>
+              <Th>Obs.</Th>
+              <Th />
             </tr>
           </thead>
           <tbody>
-            {transferencias.map((t) => (
-              <tr key={t.id as string} className="border-t border-slate-100">
-                <td className="px-3 py-2 text-slate-700">
-                  {formatarData(t.data as string | null)}
-                </td>
-                <td className="px-3 py-2 text-slate-700">
-                  {(t.frente as string | null) ?? "—"}
-                </td>
-                <td className="px-3 py-2 text-slate-700">
-                  {nomePorDeposito.get(t.deposito_destino as string) ??
-                    (t.deposito_destino as string | null) ??
-                    "—"}
-                </td>
-                <td className="px-3 py-2 font-medium text-slate-900">
-                  {abrevPorOleo.get(t.codigo_material as string) ??
-                    (t.codigo_material as string)}
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums text-slate-800">
-                  {formatarNumero(Number(t.quantidade ?? 0))}
-                </td>
-                <td className="px-3 py-2 text-slate-500">
-                  {(t.observacao as string | null) ?? ""}
-                </td>
-                <td className="px-3 py-2 text-right">
-                  <form action={excluirTransferenciaAction}>
-                    <input type="hidden" name="id" value={t.id as string} />
-                    <button
-                      type="submit"
-                      className="text-xs font-medium text-red-600 hover:underline"
-                    >
-                      excluir
-                    </button>
-                  </form>
-                </td>
-              </tr>
-            ))}
+            {transferencias.map((t) => {
+              const nomeCaminhao =
+                nomePorDeposito.get(t.deposito_destino as string) ??
+                (t.deposito_destino as string | null) ??
+                "—";
+              const nomeOleo =
+                abrevPorOleo.get(t.codigo_material as string) ??
+                (t.codigo_material as string);
+              return (
+                <tr key={t.id as string} className="border-t border-slate-100">
+                  <Td>{formatarData(t.data as string | null)}</Td>
+                  <Td>{(t.frente as string | null) ?? "—"}</Td>
+                  <Td>{nomeCaminhao}</Td>
+                  <Td className="font-medium text-slate-900">{nomeOleo}</Td>
+                  <Td className="text-right tabular-nums">
+                    {formatarNumero(Number(t.quantidade ?? 0))}
+                  </Td>
+                  <Td className="text-slate-500">
+                    {(t.observacao as string | null) ?? ""}
+                  </Td>
+                  <Td className="text-right">
+                    <BotaoExcluir
+                      id={t.id as string}
+                      resumo={`${formatarData(t.data as string | null)} · ${nomeCaminhao} · ${nomeOleo} · qtd ${formatarNumero(Number(t.quantidade ?? 0))}`}
+                    />
+                  </Td>
+                </tr>
+              );
+            })}
             {transferencias.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-3 py-6 text-center text-slate-400">

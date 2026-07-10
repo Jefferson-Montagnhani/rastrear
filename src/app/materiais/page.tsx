@@ -1,9 +1,12 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { criarClienteSupabase } from "@/lib/supabase/server";
 import { exigirAdmin } from "@/lib/auth";
 import { CatalogoMateriais } from "./_components/CatalogoMateriais";
 import { AdicionarMaterial } from "./_components/AdicionarMaterial";
 import type { Material } from "./_components/LinhaMaterial";
+import { CabecalhoPagina } from "@/components/ui";
+
+export const metadata: Metadata = { title: "Catálogo de materiais" };
 
 // Sempre renderiza no servidor a cada requisição (dados vivos do banco).
 export const dynamic = "force-dynamic";
@@ -25,19 +28,12 @@ export default async function MateriaisPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-6">
-      <Link href="/" className="text-sm text-slate-500 hover:text-slate-700">
-        ← Início
-      </Link>
-      <h1 className="text-2xl font-bold text-slate-900">
-        Catálogo de materiais
-      </h1>
-      <p className="mt-1 mb-4 text-sm text-slate-500">
-        Cadastre o nome mais conhecido de cada peça. O catálogo é preenchido
-        automaticamente (código + descrição) quando você importa o estoque do
-        SAP; aqui você só ajusta os apelidos.
-      </p>
+      <CabecalhoPagina
+        titulo="Catálogo de materiais"
+        descricao="Cadastre o nome mais conhecido de cada peça. O catálogo é preenchido automaticamente (código + descrição) quando você importa o estoque do SAP; aqui você só ajusta os apelidos."
+      />
 
-      <section className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <section className="mb-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold text-slate-700">
           Adicionar / atualizar um material
         </h2>

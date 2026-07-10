@@ -4,10 +4,10 @@ Sistema web do PCM da Manutenção Automotiva (Raízen — Unidade Mundial) para
 substituir os 4 relatórios diários que hoje são montados numa planilha Excel
 (.xlsm com Power Query) e enviados no WhatsApp.
 
-> **Estado atual:** Parte 1 entregue — **Relatório 2 (Turnos x Baixas)**.
-> Os Relatórios 1 (Custos), 3 (Saldo por caminhão) e 4 (Reposição de óleo),
-> além de login por papel, transferências de óleo e histórico, entram nas
-> próximas partes.
+> **Estado atual:** os 4 relatórios estão entregues (Custos, Turnos x Baixas,
+> Saldo por caminhão e Reposição de óleo), com login por papel, transferências
+> de óleo, histórico por data, exportação em PNG/PDF, tela de usuários e
+> navegação global entre as telas.
 
 ## Stack
 
@@ -120,8 +120,12 @@ Supabase fica fora da allowlist de rede — por isso a verificação foi feita v
 MCP (seed + queries de conferência). **Na sua máquina local o acesso é normal**,
 então `npm run dev` e os uploads funcionam direto.
 
-## Próximos passos
+## Interface
 
-- Registro de transferências de óleo (delivery → caminhão-oficina)
-- Histórico por data (R3/R4) e exportação em PDF
-- Tela de administração de usuários (hoje os papéis são ajustados via SQL)
+- **Navegação global:** barra fixa no topo com abas para todas as telas
+  (admin) ou só o Relatório 3 (mecânico), com usuário logado e botão sair.
+- **Identidade Raízen:** verde-petróleo + verde-limão em todo o app.
+- **Uploads recolhidos:** as importações ficam na "Área do administrador"
+  (colapsável) no fim de cada relatório — o relatório aparece primeiro.
+- **Responsivo:** as abas rolam na horizontal no celular e as tabelas têm
+  rolagem própria.

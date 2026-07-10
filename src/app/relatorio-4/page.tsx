@@ -1,4 +1,4 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { criarClienteSupabase } from "@/lib/supabase/server";
 import { exigirAdmin } from "@/lib/auth";
 import { formatarCarimbo, formatarData } from "@/lib/turnos";
@@ -10,9 +10,11 @@ import {
   type OleoEntrada,
 } from "@/lib/oleo";
 import { ExportavelRelatorio } from "@/components/ExportavelRelatorio";
-import { BarraUsuario } from "@/components/BarraUsuario";
 import { SeletorSnapshot } from "@/components/SeletorSnapshot";
 import { UploadEstoque } from "@/app/relatorio-3/_components/UploadEstoque";
+import { AreaAdmin, CabecalhoPagina, EstadoVazio } from "@/components/ui";
+
+export const metadata: Metadata = { title: "Relatório 4 — Reposição de óleo" };
 
 // Sempre renderiza no servidor a cada requisição (dados vivos do banco).
 export const dynamic = "force-dynamic";
@@ -45,12 +47,11 @@ export default async function Relatorio4Page(props: {
 
   if (snaps.length === 0) {
     return (
-      <Pagina atualizadoEm="—" snapshots={[]} snapSelecionado="">
-        <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-          Nenhum estoque importado ainda. Importe o export do SAP (painel
-          abaixo).
-        </div>
-        <AreaAdmin />
+      <Pagina atualizadoEm="—" snapshots={[]} snapSelecionado="" adminAberta>
+        <EstadoVazio
+          titulo="Nenhum estoque importado ainda"
+          descricao="Importe o export do SAP na área do administrador abaixo para calcular a reposição."
+        />
       </Pagina>
     );
   }
@@ -213,11 +214,23 @@ export default async function Relatorio4Page(props: {
       </ExportavelRelatorio>
 
       {/* Detalhado por caminhão (apoio do admin) */}
-      <details className="rounded-lg border border-slate-200 bg-white p-4">
-        <summary className="cursor-pointer text-sm font-semibold text-slate-700">
+      <details className="group rounded-xl border border-slate-200 bg-white shadow-sm">
+        <summary className="flex cursor-pointer select-none items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-90"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m9 6 6 6-6 6" />
+          </svg>
           Detalhamento por caminhão (estoque, ponto, máximo, reservas)
         </summary>
-        <div className="mt-3 flex flex-col gap-5">
+        <div className="flex flex-col gap-5 border-t border-slate-100 px-4 py-4">
           {[...porCaminhao.entries()].map(([nome, itens]) => (
             <div key={nome}>
               <h3 className="mb-1 text-sm font-semibold text-slate-800">{nome}</h3>
@@ -257,8 +270,6 @@ export default async function Relatorio4Page(props: {
           ))}
         </div>
       </details>
-
-      <AreaAdmin />
     </Pagina>
   );
 }
@@ -270,45 +281,35 @@ function Pagina({
   atualizadoEm,
   snapshots,
   snapSelecionado,
+  adminAberta = false,
 }: {
   children: React.ReactNode;
   atualizadoEm: string;
   snapshots: { id: string; rotulo: string }[];
   snapSelecionado: string;
+  adminAberta?: boolean;
 }) {
   return (
     <main className="mx-auto max-w-4xl px-4 py-6">
-      <BarraUsuario />
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <Link href="/" className="text-sm text-slate-500 hover:text-slate-700">
-            ← Início
-          </Link>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Relatório 4 — Reposição de óleo
-          </h1>
-        </div>
-        <span className="text-xs text-slate-400">Atualizado em {atualizadoEm}</span>
-      </div>
+      <CabecalhoPagina
+        titulo="Relatório 4 — Reposição de óleo"
+        descricao="Quanto o delivery precisa repor de óleo em cada frente."
+        atualizadoEm={atualizadoEm}
+      />
       <div className="mb-4">
         <SeletorSnapshot snapshots={snapshots} selecionado={snapSelecionado} />
       </div>
-      <div className="flex flex-col gap-4">{children}</div>
-    </main>
-  );
-}
+      <div className="flex flex-col gap-4">
+        {children}
 
-function AreaAdmin() {
-  return (
-    <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <h2 className="mb-1 text-sm font-semibold text-slate-700">
-        Área do administrador
-      </h2>
-      <p className="mb-3 text-xs text-slate-500">
-        Importar o export de estoque do SAP (mesmo arquivo do Relatório 3). Os
-        pontos de reposição e estoques máximos vêm do próprio SAP.
-      </p>
-      <UploadEstoque />
-    </section>
+        <AreaAdmin abertaPorPadrao={adminAberta}>
+          <p className="mb-3 text-xs text-slate-500">
+            Importar o export de estoque do SAP (mesmo arquivo do Relatório 3).
+            Os pontos de reposição e estoques máximos vêm do próprio SAP.
+          </p>
+          <UploadEstoque />
+        </AreaAdmin>
+      </div>
+    </main>
   );
 }

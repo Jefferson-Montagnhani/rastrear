@@ -1,8 +1,10 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { criarClienteSupabase } from "@/lib/supabase/server";
 import { exigirAdmin } from "@/lib/auth";
-import { BarraUsuario } from "@/components/BarraUsuario";
 import { LinhaUsuario, type Usuario } from "./_components/LinhaUsuario";
+import { CabecalhoPagina, Th } from "@/components/ui";
+
+export const metadata: Metadata = { title: "Usuários" };
 
 export const dynamic = "force-dynamic";
 
@@ -20,27 +22,26 @@ export default async function UsuariosPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-6">
-      <BarraUsuario />
-      <Link href="/" className="text-sm text-slate-500 hover:text-slate-700">
-        ← Início
-      </Link>
-      <h1 className="text-2xl font-bold text-slate-900">Usuários</h1>
-      <p className="mt-1 mb-4 text-sm text-slate-500">
-        Defina o papel (admin ou mecânico) e a situação de cada usuário. Para{" "}
-        <strong>criar</strong> um novo login, use{" "}
-        <em>Authentication › Users › Add user</em> no Supabase — o usuário nasce
-        como mecânico e aparece aqui para você ajustar.
-      </p>
+      <CabecalhoPagina
+        titulo="Usuários"
+        descricao="Defina o papel (admin ou mecânico) e a situação de cada usuário."
+      />
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+        Para <strong>criar</strong> um novo login, use{" "}
+        <em>Authentication › Users › Add user</em> no Supabase — o usuário
+        nasce como mecânico e aparece aqui para você ajustar.
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="bg-slate-100 text-left text-slate-600">
-              <th className="px-3 py-2 font-semibold">E-mail</th>
-              <th className="px-3 py-2 font-semibold">Nome</th>
-              <th className="px-3 py-2 font-semibold">Papel</th>
-              <th className="px-3 py-2 font-semibold">Situação</th>
-              <th className="px-3 py-2"></th>
+              <Th>E-mail</Th>
+              <Th>Nome</Th>
+              <Th>Papel</Th>
+              <Th>Situação</Th>
+              <Th />
             </tr>
           </thead>
           <tbody>

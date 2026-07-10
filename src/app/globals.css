@@ -29,6 +29,36 @@
   --color-emerald-900: #0a3329;
 }
 
+/* Fonte do app: Geist (carregada no layout), com fallback do sistema. */
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Arial, sans-serif;
+}
+
+@layer base {
+  /* Controles de formulário seguem a cor da marca. */
+  input[type="checkbox"],
+  input[type="radio"],
+  progress {
+    accent-color: var(--color-brand-light);
+  }
+
+  /* Foco visível consistente (acessibilidade). */
+  :focus-visible {
+    outline: 2px solid var(--color-emerald-400);
+    outline-offset: 1px;
+  }
+
+  /* Rolagem discreta nas tabelas largas. */
+  ::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-slate-300, #cbd5e1);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }

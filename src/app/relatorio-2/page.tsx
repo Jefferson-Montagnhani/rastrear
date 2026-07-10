@@ -1,4 +1,4 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { criarClienteSupabase } from "@/lib/supabase/server";
 import { exigirAdmin } from "@/lib/auth";
 import {
@@ -11,6 +11,16 @@ import {
 import { UploadTurnos } from "./_components/UploadTurnos";
 import { FiltrosRelatorio2 } from "./_components/FiltrosRelatorio2";
 import { ExportavelRelatorio } from "@/components/ExportavelRelatorio";
+import {
+  AreaAdmin,
+  CabecalhoPagina,
+  CartaoResumo,
+  EstadoVazio,
+  Td,
+  Th,
+} from "@/components/ui";
+
+export const metadata: Metadata = { title: "Relatório 2 — Turnos" };
 
 // Sempre renderiza no servidor a cada requisição (dados vivos do banco).
 export const dynamic = "force-dynamic";
@@ -53,11 +63,11 @@ export default async function Relatorio2Page(props: {
   // Sem dados ainda: mostra só o upload.
   if (datas.length === 0) {
     return (
-      <Pagina atualizadoEm="—">
-        <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-          Nenhum turno importado ainda. Faça o upload de um arquivo de turnos
-          para gerar o relatório.
-        </div>
+      <Pagina atualizadoEm="—" adminAberta>
+        <EstadoVazio
+          titulo="Nenhum turno importado ainda"
+          descricao="Faça o upload de um arquivo de turnos (.csv / .xls) na área do administrador abaixo para gerar o relatório."
+        />
       </Pagina>
     );
   }
@@ -126,22 +136,25 @@ export default async function Relatorio2Page(props: {
 
         {/* Cartões de resumo */}
         <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Cartao titulo="Total de turnos" valor={resumo.totalTurnos.toLocaleString("pt-BR")} />
-          <Cartao
+          <CartaoResumo
+            titulo="Total de turnos"
+            valor={resumo.totalTurnos.toLocaleString("pt-BR")}
+          />
+          <CartaoResumo
             titulo="Turnos com baixa"
             valor={`${resumo.turnosComBaixa.toLocaleString("pt-BR")} (${Math.round(
               resumo.percentualComBaixa
             )}%)`}
             destaque="emerald"
           />
-          <Cartao
+          <CartaoResumo
             titulo="Turnos sem baixa"
             valor={(resumo.totalTurnos - resumo.turnosComBaixa).toLocaleString(
               "pt-BR"
             )}
             destaque="red"
           />
-          <Cartao
+          <CartaoResumo
             titulo="Qtd. total baixada"
             valor={resumo.qtdTotalBaixada.toLocaleString("pt-BR")}
           />
@@ -152,8 +165,8 @@ export default async function Relatorio2Page(props: {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="bg-slate-100 text-left text-slate-600">
-                <Th>cd_turno</Th>
-                <Th>cd_equipamento</Th>
+                <Th>Cód. do turno</Th>
+                <Th>Equipamento</Th>
                 {instanciaSelecionada === "TODAS" && <Th>Instância</Th>}
                 <Th>Turno</Th>
                 <Th>Início</Th>
@@ -165,13 +178,18 @@ export default async function Relatorio2Page(props: {
             </thead>
             <tbody>
               {linhas.map((l) => (
-                <tr key={l.cd_turno} className="border-t border-slate-100">
-                  <Td>{l.cd_turno}</Td>
+                <tr
+                  key={l.cd_turno}
+                  className={`border-t border-slate-100 ${
+                    l.baixou ? "" : "bg-red-50/50"
+                  }`}
+                >
+                  <Td className="font-mono text-xs">{l.cd_turno}</Td>
                   <Td>{l.cd_equipamento ?? "—"}</Td>
                   {instanciaSelecionada === "TODAS" && (
                     <Td>{l.instancia ?? "—"}</Td>
                   )}
-                  <Td>{l.turno ?? "—"}</Td>
+                  <Td className="font-semibold">{l.turno ?? "—"}</Td>
                   <Td>{formatarDataHora(l.inicio_turno)}</Td>
                   <Td>{formatarDataHora(l.fim_turno)}</Td>
                   <Td>
@@ -189,7 +207,7 @@ export default async function Relatorio2Page(props: {
         <p className="mt-2 text-xs text-slate-400">
           BAIXOU = SIM quando o turno registrou consumo de material
           (qtd. &gt; 0). Turnos que usaram material mas não baixaram aparecem
-          como NÃO.
+          destacados em vermelho.
         </p>
       </ExportavelRelatorio>
     </Pagina>
@@ -201,61 +219,32 @@ export default async function Relatorio2Page(props: {
 function Pagina({
   children,
   atualizadoEm,
+  adminAberta = false,
 }: {
   children: React.ReactNode;
   atualizadoEm: string;
+  adminAberta?: boolean;
 }) {
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <Link
-            href="/"
-            className="text-sm text-slate-500 hover:text-slate-700"
-          >
-            ← Início
-          </Link>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Relatório 2 — Turnos
-          </h1>
-        </div>
-        <span className="text-xs text-slate-400">
-          Atualizado em {atualizadoEm}
-        </span>
+      <CabecalhoPagina
+        titulo="Relatório 2 — Turnos"
+        descricao="Quais turnos baixaram material no dia de referência."
+        atualizadoEm={atualizadoEm}
+      />
+
+      <div className="flex flex-col gap-4">
+        {children}
+
+        <AreaAdmin abertaPorPadrao={adminAberta}>
+          <p className="mb-3 text-xs text-slate-500">
+            Importar o arquivo de turnos (.csv / .xls). Reenviar um arquivo
+            mais novo atualiza os turnos que estavam em aberto.
+          </p>
+          <UploadTurnos />
+        </AreaAdmin>
       </div>
-
-      <section className="mb-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">
-          Importar arquivo de turnos
-        </h2>
-        <UploadTurnos />
-      </section>
-
-      <div className="flex flex-col gap-4">{children}</div>
     </main>
-  );
-}
-
-function Cartao({
-  titulo,
-  valor,
-  destaque,
-}: {
-  titulo: string;
-  valor: string;
-  destaque?: "emerald" | "red";
-}) {
-  const cor =
-    destaque === "emerald"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : destaque === "red"
-        ? "border-red-200 bg-red-50 text-red-700"
-        : "border-slate-200 bg-white text-slate-800";
-  return (
-    <div className={`rounded-lg border p-3 ${cor}`}>
-      <div className="text-xs font-medium opacity-70">{titulo}</div>
-      <div className="mt-1 text-xl font-bold tabular-nums">{valor}</div>
-    </div>
   );
 }
 
@@ -269,26 +258,4 @@ function BadgeBaixou({ baixou }: { baixou: boolean }) {
       NÃO
     </span>
   );
-}
-
-function Th({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <th className={`px-3 py-2 font-semibold ${className}`}>{children}</th>
-  );
-}
-
-function Td({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return <td className={`px-3 py-2 text-slate-700 ${className}`}>{children}</td>;
 }
